@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fykj.scaffold.evaluation.mapper.ApplyNoteMapper">
+
+    <select id="getMaxCodeNumber" resultType="com.fykj.scaffold.evaluation.domain.entity.ApplyNote">
+        SELECT
+            *
+        FROM
+            APPLY_NOTE
+        WHERE
+            DATE_FORMAT(CREATE_DATE, '%Y%M') = DATE_FORMAT(CURDATE(), '%Y%M')
+        ORDER BY
+            CREATE_DATE DESC
+        LIMIT 1
+    </select>
+
+    <select id="getListWithQuery" resultType="com.fykj.scaffold.evaluation.domain.vo.ApplyNoteVo">
+        select an.id as id, an.evaluation_user_id as evaluationUserId, an.evaluation_user_name as evaluationUserName,
+        an.`code` as `code`, an.project_name as projectName, an.versions as versions, an.type as type,
+         an.`status` as `status`,
+        an.system_summarize as systemSummarize, an.tel as tel,
+        DATE_FORMAT(an.create_date,'%Y-%m-%d %T') AS createDate,
+        an.is_deleted as deleted,
+        DATE_FORMAT(an.update_date,'%Y-%m-%d %T') AS updateDate,
+        an.creator as creator, an.updater as updater,
+        an.version as version, substring_index(an.test_report_no,'.',1) as testReportNo,
+        an.test_report_url as testReportUrl,
+        amount.amountReceived, amount.amountReceivable
+        from apply_note an
+        LEFT JOIN (SELECT tr.apply_note_id as applyId, SUM(tr.amount_receivable) as amountReceivable,
+        SUM(tr.amount_received) as amountReceived
+        FROM apply_note_test_record tr WHERE tr.is_deleted = FALSE GROUP BY tr.apply_note_id) as amount
+        ON an.id = amount.applyId
+        where an.is_deleted = false
+        <if test="params.status != null and params.status != ''">
+            AND an.status = #{params.status,jdbcType=VARCHAR}
+        </if>
+        <if test="params.startDate != null and params.startDate != ''">
+            AND an.create_date <![CDATA[>=]]> #{params.startDate,jdbcType=VARCHAR}
+        </if>
+        <if test="params.endDate != null and params.endDate != ''">
+            AND an.create_date <![CDATA[<=]]> #{params.endDate,jdbcType=VARCHAR}
+        </if>
+        <if test="params.keyword != null and params.keyword != '' ">
+            AND (an.`code` LIKE CONCAT(CONCAT('%', #{params.keyword,jdbcType=VARCHAR}),'%')
+            or an.evaluation_user_name LIKE CONCAT(CONCAT('%', #{params.keyword,jdbcType=VARCHAR}),'%')
+            or an.project_name LIKE CONCAT(CONCAT('%', #{params.keyword,jdbcType=VARCHAR}),'%')
+            or an.tel LIKE CONCAT(CONCAT('%', #{params.keyword,jdbcType=VARCHAR}),'%'))
+        </if>
+        <if test="params.evaluationUserId != null and params.evaluationUserId != ''">
+            AND an.evaluation_user_id = #{params.evaluationUserId,jdbcType=VARCHAR}
+        </if>
+        order by an.`code` desc
+    </select>
+
+    <select id="sumByStatus" resultType="com.fykj.scaffold.evaluation.domain.vo.ApplyNoteSumByStatusVos.ApplyNoteSumReceiveVo">
+        SELECT
+        an.`status` as status,
+        DATE_FORMAT( an.create_date, '%Y-%m' ) as month,
+        COUNT(DISTINCT(antr.apply_note_id)) as count,
+        SUM(antr.amount_received) as money
+        FROM
+        apply_note AS an
+        LEFT JOIN apply_note_test_record AS antr ON an.id = antr.apply_note_id
+        WHERE
+        an.is_deleted = 0 and  (antr.is_deleted = 0 or antr.is_deleted is null) and
+        DATE_FORMAT( an.create_date, '%Y-%m' ) &gt;= #{params.startDate} and DATE_FORMAT( an.create_date, '%Y-%m' ) &lt;= #{params.endDate}
+        <if test="params.status != null and params.status != ''">
+            AND an.`status` = #{params.status}
+        </if>
+        GROUP BY an.`status`,DATE_FORMAT( an.create_date, '%Y-%m' )
+    </select>
+
+    <select id="sumByApplyTime" resultType="com.fykj.scaffold.evaluation.domain.vo.ApplyNoteSumByApplyTimeVo">
+        SELECT
+        an.`code` AS CODE,
+        an.evaluation_user_name AS evaluationUserName,
+        an.project_name AS projectName,
+        an.versions AS versions,
+        SUM( antr.amount_receivable ) AS amountReceivable,
+        SUM( antr.amount_received ) AS amountReceived,
+        if(COUNT( antr.apply_note_id ) > 0, COUNT( antr.apply_note_id ) - 1,  0) AS backTimes,
+        an.create_date AS receiveTime,
+        an.`status` AS status,
+        an.end_date AS testCompleteTime,
+        an.test_report_no AS testReportNo,
+        CONCAT(TIMESTAMPDIFF(hour,an.create_date,an.end_date),'H') AS time,
+        ana.score AS score
+        FROM
+        apply_note AS an
+        LEFT JOIN sys_evaluation_user AS seu ON an.evaluation_user_id = seu.id
+        LEFT JOIN apply_note_test_record AS antr ON an.id = antr.apply_note_id
+        LEFT JOIN apply_note_appraise AS ana ON an.id = ana.apply_note_id
+        WHERE
+        an.is_deleted = 0
+        AND ( antr.is_deleted = 0 OR antr.is_deleted IS NULL )
+        AND ( seu.is_deleted = 0 OR seu.is_deleted IS NULL )
+        AND ( ana.is_deleted = 0 OR ana.is_deleted IS NULL )
+        AND an.create_date &gt;= #{params.startDate}
+        AND an.create_date &lt;= #{params.endDate}
+        <if test="params.status != null and params.status != ''">
+            AND an.`status` = #{params.status}
+        </if>
+        GROUP BY
+        an.`code`
+        ORDER BY
+        an.create_date desc
+    </select>
+    <select id="findByLoginUser" resultType="com.fykj.scaffold.evaluation.domain.vo.ApplyNoteListVo">
+        SELECT
+            a.id,
+            a.CODE,
+            a.projectName,
+            s.NAME as statusText,
+            a.tel,
+            a.createDate,
+            a.download,
+            a.testReportNo,
+            a.testReportUrl
+        FROM
+            (
+            SELECT DISTINCT
+                an.id,
+                an.CODE AS CODE,
+                an.project_name AS projectName,
+                an.STATUS,
+                an.tel,
+                an.create_date AS createDate,
+            IF
+                ( ar.type = 'testReport', 1, 0 ) AS download,
+                an.test_report_no AS testReportNo,
+                an.test_report_url AS testReportUrl
+            FROM
+                apply_note an
+                LEFT JOIN apply_note_test_record ant ON an.id = ant.apply_note_id
+                LEFT JOIN apply_note_test_record_attachment ar ON ant.id = ar.record_id
+            WHERE
+                an.evaluation_user_id = #{evaluationUserId,jdbcType=VARCHAR}
+            ) a
+            LEFT JOIN sys_dict s ON s.CODE = a.STATUS
+    </select>
+    <select id="getInformationDetail" resultType="com.fykj.scaffold.evaluation.domain.vo.ApplyNoteDetailVo">
+        SELECT
+            *
+        FROM
+            (
+            SELECT
+                an.CODE,
+                an.project_name AS projectName,
+                an.versions,
+                an.type,
+                an.STATUS,
+                s.NAME AS statusText,
+                an.system_summarize AS systemSummarize,
+                an.create_date AS createDate,
+                sum( antr.amount_received ) AS sumMoney,
+                an.test_report_no AS testReportNo,
+                an.test_report_url AS testReportUrl
+            FROM
+                apply_note an
+                LEFT JOIN apply_note_test_record antr ON an.id = antr.apply_note_id
+                LEFT JOIN sys_dict s ON s.CODE = an.STATUS
+            WHERE
+                an.id = #{id,jdbcType=VARCHAR}
+            ) a
+    </select>
+    <select id="typeCovert" resultType="java.lang.String">
+        SELECT REPLACE
+        ( GROUP_CONCAT( DISTINCT ( s.NAME ) ), ',', '、' ) AS typeName
+        FROM
+        (
+        SELECT
+        substring_index( substring_index( an.type, ';', b.help_topic_id + 1 ), ';', - 1 ) AS types
+        FROM
+        apply_note an
+        JOIN mysql.help_topic b ON b.help_topic_id &lt;( LENGTH( an.type ) - LENGTH( REPLACE ( an.type, ';', '' ) ) + 1 )
+        WHERE
+        an.id = #{id,jdbcType=VARCHAR}
+        ) a
+        LEFT JOIN sys_dict s ON s.CODE = a.types
+    </select>
+</mapper>

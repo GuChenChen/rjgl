@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fykj.scaffold.cms.mapper.CmsCommentMapper">
+    <select id="getListWithQuery" resultType="com.fykj.scaffold.cms.domain.vo.CmsCommentVo">
+        SELECT c.id           as id,
+               c.name         as name,
+               c.phone        as phone,
+               c.comment_time as commentTime,
+               c.is_reply     as reply,
+               c.reply_time   as replyTime,
+               c.reply_person as replyPerson,
+               c.ip           as ip,
+               category.name  as categoryName,
+               content.title  as contentName
+        FROM cms_comment c
+                 LEFT JOIN cms_category category ON category.id = c.category_id
+                 LEFT JOIN cms_content content ON content.id = c.content_id
+        WHERE c.is_deleted = FALSE
+        <if test="params.name != null and params.name !=''">
+            <bind name="pattern" value="'%' + params.name + '%'" />
+            and c.name like #{pattern}
+        </if>
+        <if test="params.phone != null and params.phone !=''">
+            and c.phone = #{params.phone}
+        </if>
+        <if test="params.startDate != null and params.startDate  !=''">
+            and date(c.comment_time) &gt;= #{params.startDate}
+        </if>
+        <if test="params.endDate != null and params.endDate  !=''">
+            and date(c.comment_time) &lt;= #{params.endDate}
+        </if>
+        <if test="params.reply != null">
+            and is_reply = #{params.reply}
+        </if>
+<!--        <if test="params.categoryId != null and params.categoryId !=''">-->
+<!--            and c.category_id = #{params.categoryId}-->
+<!--        </if>-->
+        <if test="params.contentId != null and params.contentId !=''">
+            and c.content_id = #{params.contentId}
+        </if>
+    </select>
+</mapper>

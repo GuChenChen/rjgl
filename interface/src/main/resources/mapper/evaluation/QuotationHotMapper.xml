@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fykj.scaffold.evaluation.mapper.QuotationHotMapper">
+
+    <select id="findByViewTime" resultType="com.fykj.scaffold.evaluation.domain.vo.QuotationHotVo">
+        SELECT
+            DATE_FORMAT(qh.view_time,"%Y-%m") as viewTime,
+            qh.first_party AS firstParty,
+            qh.second_party AS secondParty,
+            qh.function_test AS functionTest,
+            qh.performance_test AS performanceTest,
+            qh.security_test_code AS securityTestCode
+        FROM
+            quotation_hot qh
+        where
+        is_deleted = 0
+        <if test="params.viewTimeStart != null and params.viewTimeStart != '' ">
+            AND DATE_FORMAT( qh.view_time, '%Y-%m' ) &gt;= #{params.viewTimeStart,jdbcType=VARCHAR}
+        </if>
+        <if test="params.viewTimeEnd != null and params.viewTimeEnd != '' ">
+            AND DATE_FORMAT( qh.view_time, '%Y-%m' ) &lt;= #{params.viewTimeEnd,jdbcType=VARCHAR}
+        </if>
+        GROUP BY qh.view_time
+    </select>
+
+    <select id="findByCurrentMonth" resultType="com.fykj.scaffold.evaluation.domain.vo.QuotationHotVo">
+        SELECT
+        qh.id AS id,
+        qh.first_party AS firstParty,
+        qh.second_party AS secondParty,
+        qh.function_test AS functionTest,
+        qh.performance_test AS performanceTest,
+        qh.security_test_code AS securityTestCode
+        FROM
+        quotation_hot qh
+        where
+        is_deleted = 0
+        AND DATE_FORMAT( qh.view_time, '%Y-%m' ) = DATE_FORMAT(NOW(), '%Y-%m')
+    </select>
+
+    <update id="updateQuotationHotById">
+        update quotation_hot
+        <trim prefix="set" suffixOverrides=",">
+            <if test="params.firstParty != null and params.firstParty != '' ">
+                `first_party` =  #{params.firstParty},
+            </if>
+            <if test="params.secondParty != null and params.secondParty != '' ">
+                `second_party`=  #{params.secondParty},
+            </if>
+            <if test="params.functionTest != null and params.functionTest != '' ">
+                `function_test` =  #{params.functionTest},
+            </if>
+            <if test="params.performanceTest != null and params.performanceTest != '' ">
+                `performance_test` =  #{params.performanceTest},
+            </if>
+            <if test="params.securityTestCode != null and params.securityTestCode != '' ">
+                `security_test_code` =  #{params.securityTestCode}
+            </if>
+        </trim>
+        where id=#{params.id}
+    </update>
+
+
+</mapper>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.fykj.scaffold.evaluation.mapper.FlowNodeMapper">
+
+    <select id="getListWithQuery" parameterType="com.fykj.scaffold.evaluation.domain.params.FlowNodeParams" resultType="com.fykj.scaffold.evaluation.domain.entity.FlowNode">
+        select
+        fn.*,
+        wf.flow_name as flowCode,
+        fn2.action_name as originStatus,
+        fn.action as action,
+        fn.action_name as actionName,
+        fn3.action_name as targetStatus,
+        sr.name as handleRoleCode,
+        su.name as handleUserId,
+        fn.sequence as sequence,
+        n.name as noticeId,
+        fn.remark as remark
+        FROM
+        flow_node as fn
+        LEFT JOIN work_flow as wf ON wf.flow_code = fn.flow_code
+        LEFT JOIN flow_node as fn2 ON fn2.action = fn.origin_status
+        LEFT JOIN flow_node as fn3 ON fn3.action = fn.target_status
+        LEFT JOIN sys_user as su ON su.id = fn.handle_user_id
+        LEFT JOIN sys_role as sr ON sr.code = fn.handle_role_code
+        LEFT JOIN notice as n ON n.id = fn.notice_id
+        WHERE
+        fn.is_deleted = 0
+        <if test="params.flowCode != null and params.flowCode != '' ">
+            and fn.flow_code = #{params.flowCode}
+        </if>
+        order by fn.sequence asc
+    </select>
+</mapper>

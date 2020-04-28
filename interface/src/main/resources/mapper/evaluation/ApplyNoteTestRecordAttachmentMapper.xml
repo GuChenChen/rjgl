@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.fykj.scaffold.evaluation.mapper.ApplyNoteTestRecordAttachmentMapper">
+
+    <select id="getAttrByRecordId" resultType="com.fykj.scaffold.evaluation.domain.vo.ApplyNoteTestRecordAttachmentVo">
+        select an.*,dic.`name` as typeText from apply_note_test_record_attachment an
+        LEFT JOIN sys_dict dic ON an.type = dic.`code` AND dic.is_deleted = FALSE
+        where an.is_deleted = false and an.record_id = #{id}
+    </select>
+</mapper>

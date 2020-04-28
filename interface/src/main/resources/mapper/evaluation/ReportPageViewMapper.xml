@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fykj.scaffold.evaluation.mapper.ReportPageViewMapper">
+
+    <select id="getMapWithQuery" resultType="com.fykj.scaffold.evaluation.domain.vo.ReportPageVo">
+        SELECT
+            DATE_FORMAT(view_time,"%Y-%m") as viewMonth
+            <foreach collection="List" index="index" item="item" open="," separator="," >
+                sum( IF ( page_code = '${item.code}', 1, 0 ) ) AS '${item.code}'
+            </foreach>
+        FROM
+            report_page_view
+        where
+            is_deleted = 0
+            <if test="params.viewTimeStart != null and params.viewTimeStart != '' ">
+                AND view_time &gt;= #{params.viewTimeStart,jdbcType=VARCHAR}
+            </if>
+            <if test="params.viewTimeEnd != null and params.viewTimeEnd != '' ">
+                AND view_time &lt;= #{params.viewTimeEnd,jdbcType=VARCHAR}
+            </if>
+        GROUP BY viewMonth
+    </select>
+
+    <select id="getListWithQuery" resultType="com.fykj.scaffold.evaluation.domain.vo.ReportPageViewVo">
+        SELECT
+            rp.ip,
+            se.company_name as companyName,
+            rp.evaluation_user_id as userId,
+            rp.create_date as createDate
+            <foreach collection="List" index="index" item="item" open="," separator="," >
+                sum( IF ( rp.page_code = '${item.code}', 1, 0 ) ) AS '${item.code}'
+            </foreach>
+        FROM
+            report_page_view rp
+        LEFT JOIN
+            sys_evaluation_user se
+            ON rp.evaluation_user_id = se.id
+        WHERE
+            rp.is_deleted = 0
+            <if test="params.userId != null and params.userId != '' ">
+                AND rp.evaluation_user_id = #{params.userId}
+            </if>
+            <if test="params.ip != null and params.ip != '' ">
+                AND rp.ip like CONCAT(CONCAT('%', #{params.ip}),'%')
+            </if>
+            <if test="params.viewTimeStart != null and params.viewTimeStart != '' ">
+                AND DATE_FORMAT( rp.create_date, "%Y-%m-%d" ) &gt;= #{params.viewTimeStart,jdbcType=VARCHAR}
+            </if>
+            <if test="params.viewTimeEnd != null and params.viewTimeEnd != '' ">
+                AND DATE_FORMAT( rp.create_date, "%Y-%m-%d" ) &lt;= #{params.viewTimeEnd,jdbcType=VARCHAR}
+            </if>
+        GROUP BY rp.ip
+    </select>
+
+    <select id="getListByUserId" resultType="com.fykj.scaffold.evaluation.domain.vo.ReportPageViewVo">
+        SELECT
+            rp.ip,
+            se.company_name as companyName,
+            rp.evaluation_user_id as userId,
+            rp.create_date as createDate
+        <foreach collection="List" index="index" item="item" open="," separator="," >
+            sum( IF ( rp.page_code = '${item.code}', 1, 0 ) ) AS '${item.code}'
+        </foreach>
+        FROM
+            report_page_view rp
+        LEFT JOIN
+            sys_evaluation_user se
+            ON rp.evaluation_user_id = se.id
+        WHERE
+            rp.is_deleted = 0
+            <if test="params.evaluationUserId != null and params.evaluationUserId != '' ">
+                AND rp.evaluation_user_id = #{params.evaluationUserId}
+            </if>
+        GROUP BY rp.ip
+    </select>
+
+    <select id="getWorkBenchPage" resultType="com.fykj.scaffold.evaluation.domain.vo.WorkBenchVo">
+        SELECT
+            COUNT(page_code) as value,page_text as name
+        FROM
+            report_page_view
+        where
+            is_deleted = 0
+            and TO_DAYS( view_time ) = TO_DAYS( NOW( ) )
+        GROUP BY page_code
+    </select>
+
+    <select id="getWorkBenchPageOne" resultType="com.fykj.scaffold.evaluation.domain.vo.WorkBenchOneVo">
+        SELECT
+            COUNT( o.project_name ) AS num,
+            DATE_FORMAT( o.create_date, "%Y年%c月" ) AS viewMonth,
+            IFNULL( SUM( amount.amountReceivable ), 0 ) AS received,
+            IFNULL( SUM( amount.amountReceived ), 0 ) AS receivable
+        FROM
+            apply_note o
+        LEFT JOIN
+            (
+            SELECT
+            tr.apply_note_id AS applyId,
+            SUM( tr.amount_receivable ) AS amountReceivable,
+            SUM( tr.amount_received ) AS amountReceived
+            FROM
+            apply_note_test_record tr
+            WHERE
+            tr.is_deleted = FALSE
+            GROUP BY
+            tr.apply_note_id
+            ) AS amount ON o.id = amount.applyId
+        WHERE
+            o.is_deleted = 0
+            AND STR_TO_DATE( DATE_FORMAT( o.create_date, "%Y-%m" ), "%Y-%m" ) &gt;= STR_TO_DATE( DATE_FORMAT( DATE_SUB( CURRENT_DATE, INTERVAL 5 MONTH ), "%Y-%m" ), "%Y-%m" )
+            AND STR_TO_DATE( DATE_FORMAT( o.create_date, "%Y-%m" ), "%Y-%m" ) &lt;= STR_TO_DATE( DATE_FORMAT( CURRENT_DATE, "%Y-%m" ), "%Y-%m" )
+        GROUP BY viewMonth
+    </select>
+
+    <select id="getToDayNum" resultType="java.lang.Integer">
+        SELECT
+            COUNT(*) as toDay
+        FROM
+            sys_evaluation_user
+        WHERE
+            TO_DAYS( create_date ) = TO_DAYS( NOW( ) )
+    </select>
+
+    <select id="getProcessing" resultType="java.lang.Integer">
+       SELECT
+            COUNT(*) as processing
+        FROM
+            apply_note
+        WHERE
+            is_deleted = 0
+            AND `status` = 'applying'
+    </select>
+
+    <select id="getCompletedItem" resultType="java.lang.Integer">
+       SELECT
+            COUNT(*) as completedItem
+        FROM
+            apply_note
+        WHERE
+            is_deleted = 0
+            AND `status` = 'passApply'
+    </select>
+</mapper>

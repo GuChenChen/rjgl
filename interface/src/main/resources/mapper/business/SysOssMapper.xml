@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fykj.scaffold.security.business.mapper.SysOssMapper">
+
+    <select id="getListWithQuery" parameterType="com.fykj.scaffold.security.business.domain.params.OssParams" resultType="com.fykj.scaffold.security.business.domain.dto.SysOssDto">
+        select
+        a.*
+        from
+        (
+            SELECT
+            oss.*,
+            dict.name AS typeText,
+            dict2.name AS serverText,
+            GROUP_CONCAT(label. NAME SEPARATOR ',') as labelName
+          FROM
+            sys_oss oss
+          LEFT JOIN sys_dict dict ON dict.code = oss.type
+          LEFT JOIN sys_dict dict2 ON dict2.code = oss.server_code
+          LEFT JOIN sys_oss_label ol ON ol.oss_id = oss.id AND ol.is_deleted = 0
+          LEFT JOIN cms_label label ON label.id = ol.label_id
+          WHERE
+            oss.is_deleted = 0
+            <if test="params.serverCode != null and params.serverCode != '' ">
+                AND oss.server_code = #{params.serverCode}
+            </if>
+            <if test="params.type != null and params.type != '' ">
+                AND oss.type = #{params.type}
+            </if>
+            <if test="params.media != null and params.media != '' ">
+                AND oss.is_media = #{params.media}
+            </if>
+            <if test="params.name != null and params.name != '' ">
+                AND oss.name LIKE '%${params.name}%'
+            </if>
+            <if test="params.fileName != null and params.fileName != '' ">
+                AND oss.file_name LIKE '%${params.fileName}%'
+            </if>
+            GROUP BY oss.id
+            ORDER BY oss.create_date DESC
+        ) a
+        <if test="params.labelName != null and params.labelName != '' ">
+            where a.labelName LIKE '%${params.labelName}%'
+        </if>
+    </select>
+</mapper>

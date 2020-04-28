@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fykj.scaffold.cms.mapper.CmsContentPropMapper">
+
+    <select id="getListWithQuery" parameterType="com.fykj.scaffold.cms.domain.params.CmsContentPropParams" resultType="com.fykj.scaffold.cms.domain.vo.PropVo">
+      SELECT
+            cp.id,
+            cp.prop_id AS propId,
+            ep.`name` AS propName,
+            cp.prop_value AS propValue
+        FROM
+            cms_content_prop cp
+        LEFT JOIN cms_extended_prop ep ON ep.id = cp.prop_id
+        WHERE
+            cp.is_deleted = 0
+        AND ep.is_deleted = 0
+        AND cp.is_category_relate = 0
+        <if test="params.contentId != null and params.contentId != '' ">
+            AND cp.content_id = #{params.contentId}
+        </if>
+    </select>
+
+    <select id="getListByContentId" resultType="com.fykj.scaffold.cms.domain.vo.PropVo">
+        SELECT
+            cp.id,
+            cp.prop_id AS propId,
+            ep.`name` AS propName,
+            cp.prop_value AS propValue
+        FROM
+          cms_content_prop cp
+          LEFT JOIN cms_extended_prop ep ON ep.id = cp.prop_id
+        WHERE
+              cp.is_deleted = 0
+            AND ep.is_deleted = 0
+            AND cp.content_id = #{contentId}
+    </select>
+</mapper>

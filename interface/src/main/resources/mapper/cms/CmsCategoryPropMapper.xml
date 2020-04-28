@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fykj.scaffold.cms.mapper.CmsCategoryPropMapper">
+
+    <select id="getListWithQuery" parameterType="com.fykj.scaffold.cms.domain.params.CmsCategoryPropParams" resultType="com.fykj.scaffold.cms.domain.entity.CmsCategoryProp">
+      select
+          c.id,
+          c.category_id,
+          c.prop_id,
+          p.name AS propName,
+          c.prop_value
+      from cms_category_prop c
+      left join cms_extended_prop p on c.prop_id = p.id
+      where
+          c.is_deleted = 0
+      and c.category_id = #{params.categoryId}
+    </select>
+
+    <select id="getList" resultType="com.fykj.scaffold.cms.domain.entity.CmsCategoryProp">
+      select
+          c.id,
+          c.category_id,
+          c.prop_id,
+          p.name AS propName
+      from cms_category_prop c
+      left join cms_extended_prop p on c.prop_id = p.id
+      where
+          c.is_deleted = 0
+      and c.category_id = #{categoryId}
+    </select>
+</mapper>
