@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fykj.scaffold.evaluation.mapper.QuotationRulesSecondPartyMapper">
+
+    <select id="findByTypeAndNum" resultType="com.fykj.scaffold.evaluation.domain.entity.QuotationRulesSecondParty">
+        select * from quotation_rules_second_party
+        where
+        is_deleted = 0
+        <if test="type != null and type != '' ">
+            AND type = #{type}
+        </if>
+        <if test="num != null and num != '' ">
+            AND #{num} BETWEEN  start_num  AND  stop_num
+        </if>
+    </select>
+</mapper>

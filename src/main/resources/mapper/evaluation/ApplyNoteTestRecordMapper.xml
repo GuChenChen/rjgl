@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fykj.scaffold.evaluation.mapper.ApplyNoteTestRecordMapper">
+
+    <resultMap id="recordList" type="com.fykj.scaffold.evaluation.domain.vo.ApplyNoteTestRecordVo">
+        <id column="id" jdbcType="VARCHAR" property="id" />
+        <result column="applyNoteId" jdbcType="VARCHAR" property="applyNoteId" />
+        <result column="startDate" jdbcType="VARCHAR" property="startDate" />
+        <result column="endDate" jdbcType="VARCHAR" property="endDate" />
+        <result column="amountReceivable" jdbcType="VARCHAR" property="amountReceivable" />
+        <result column="amountReceived" jdbcType="VARCHAR" property="amountReceived" />
+        <result column="paymentDate" jdbcType="VARCHAR" property="paymentDate" />
+        <result column="payment" jdbcType="VARCHAR" property="payment" />
+        <result column="invoiceNumber" jdbcType="VARCHAR" property="invoiceNumber" />
+        <result column="logisticsCompany" jdbcType="VARCHAR" property="logisticsCompany" />
+        <result column="logisticsNote" jdbcType="VARCHAR" property="logisticsNote" />
+        <result column="finished" jdbcType="VARCHAR" property="finished" />
+        <result column="remark" jdbcType="VARCHAR" property="remark" />
+        <result column="createDate" jdbcType="VARCHAR" property="createDate" />
+        <result column="deleted" jdbcType="VARCHAR" property="deleted" />
+        <result column="updateDate" jdbcType="VARCHAR" property="updateDate" />
+        <result column="creator" jdbcType="VARCHAR" property="creator" />
+        <result column="updater" jdbcType="VARCHAR" property="updater" />
+        <result column="version" jdbcType="VARCHAR" property="version" />
+
+        <collection property="attachmentList" ofType="com.fykj.scaffold.evaluation.domain.entity.ApplyNoteTestRecordAttachment">
+            <id column="attId" jdbcType="VARCHAR" property="id" />
+            <result property="recordId" jdbcType="VARCHAR" column="recordId"/>
+            <result property="type" jdbcType="VARCHAR" column="type"/>
+            <result property="url" jdbcType="VARCHAR" column="url"/>
+            <result property="originalName" jdbcType="VARCHAR" column="originalName"/>
+        </collection>
+    </resultMap>
+
+    <select id="getListWithQuery" resultType="com.fykj.scaffold.evaluation.domain.vo.ApplyNoteTestRecordVo">
+        select an.id as id, an.apply_note_id as applyNoteId, an.start_date as startDate,
+        an.end_date as endDate, ROUND(an.amount_receivable,2) as amountReceivable, ROUND(an.amount_received,2) as amountReceived,
+        an.is_payment as payment, an.payment_date as paymentDate,
+        an.invoice_number as invoiceNumber, an.logistics_company as logisticsCompany, an.logistics_note as logisticsNote,
+        an.is_finished as finished, an.file_url as fileUrl, an.remark as remark,
+        an.create_date as createDate, an.end_date as endDate,
+        an.is_deleted as deleted,
+        DATE_FORMAT(an.update_date,'%Y-%m-%d %T') AS updateDate,
+        an.creator as creator, an.updater as updater,
+        an.version as version
+        from apply_note_test_record an
+        where an.is_deleted = false
+        <if test="params.applyNoteId != null">
+            AND an.apply_note_id = #{params.applyNoteId,jdbcType=VARCHAR}
+        </if>
+        order by an.create_date desc
+    </select>
+
+    <select id="getRecordInfoById" resultMap="recordList">
+        select an.id as id, an.apply_note_id as applyNoteId, an.start_date as startDate,
+        an.end_date as endDate, an.amount_receivable as amountReceivable, an.amount_received as amountReceived,
+        an.is_payment as payment, an.payment_date as paymentDate,
+        an.invoice_number as invoiceNumber, an.logistics_company as logisticsCompany, an.logistics_note as logisticsNote,
+        an.is_finished as finished, an.file_url as fileUrl, an.remark as remark,
+        an.create_date as createDate, an.end_date as endDate,
+        DATE_FORMAT(an.create_date,'%Y-%m-%d %T') AS createDate,
+        an.is_deleted as deleted,
+        DATE_FORMAT(an.update_date,'%Y-%m-%d %T') AS updateDate,
+        an.creator as creator, an.updater as updater,
+        an.version as version,
+        att.id as attId, att.record_id as recordId, att.type as `type`, att.url as url, att.original_name as originalName
+        from apply_note_test_record an
+        LEFT JOIN apply_note_test_record_attachment att
+        ON an.id = att.record_id and att.is_deleted = false
+        WHERE an.id = #{id,jdbcType=VARCHAR}
+    </select>
+
+    <select id="getApplyNoteTestRecord" resultType="com.fykj.scaffold.evaluation.domain.vo.ApplyNoteTestRecordVo">
+        select an.id as id, an.apply_note_id as applyNoteId, an.start_date as startDate,
+        an.end_date as endDate, an.amount_receivable as amountReceivable, an.amount_received as amountReceived,
+        an.is_payment as payment, an.payment_date as paymentDate,
+        an.invoice_number as invoiceNumber, an.logistics_company as logisticsCompany, an.logistics_note as logisticsNote,
+        an.is_finished as finished, an.file_url as fileUrl, an.remark as remark,
+        an.create_date as createDate, an.end_date as endDate,
+        an.is_deleted as deleted,
+        DATE_FORMAT(an.update_date,'%Y-%m-%d %T') AS updateDate,
+        an.creator as creator, an.updater as updater,
+        an.version as version
+        from apply_note_test_record an
+        where an.is_deleted = false
+        <if test="params.applyNoteId != null">
+            AND an.apply_note_id = #{params.applyNoteId,jdbcType=VARCHAR}
+        </if>
+        order by an.create_date desc
+    </select>
+
+</mapper>

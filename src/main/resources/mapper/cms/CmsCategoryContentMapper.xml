@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fykj.scaffold.cms.mapper.CmsCategoryContentMapper">
+
+    <select id="getListWithQuery" parameterType="com.fykj.scaffold.cms.domain.params.CmsContentParams" resultType="com.fykj.scaffold.cms.domain.vo.CmsContentVo">
+        select
+          a.*
+        from
+            (
+                select
+                cc.id,
+                cc.category_id,
+                cc.content_id,
+                ca.name AS categoryName,
+                co.title,
+                co.effective_date,
+                co.expiration_date,
+                cc.sequence,
+                cc.important_level,
+                cc.is_stick AS stick,
+                cc.is_hot AS hot,
+                cc.is_comment AS comment,
+                cc.parent_id,
+                ca2.name AS parentName,
+                co.audit_status,
+                dict.name AS auditStatusName,
+                co.is_audit ASaudit,
+                GROUP_CONCAT(label. NAME SEPARATOR ',') as labelName,
+                co.virtual_reading as virtualReading,
+                co.actual_reading as actualReading
+                FROM
+                cms_category_content cc
+                LEFT JOIN  cms_content co ON cc.content_id = co.id AND co.is_deleted = 0
+                LEFT JOIN cms_category ca ON cc.category_id = ca.id AND ca.is_deleted = 0
+                LEFT JOIN cms_category ca2 ON cc.parent_id = ca2.id AND ca.is_deleted = 0
+                LEFT JOIN cms_category_label cl ON cc.category_id = cl.category_id AND cl.is_deleted = 0
+                LEFT JOIN cms_label label ON label.id = cl.label_id
+                LEFT JOIN sys_dict dict ON dict.code = co.audit_status
+                WHERE
+                cc.is_deleted = 0
+                AND cc.is_recycling = #{params.recycling}
+                <if test="params.categoryList != null and params.categoryList != '' ">
+                    AND cc.category_list LIKE '${params.categoryList}%'
+                </if>
+                <if test="params.title != null and params.title != '' ">
+                    AND co.title LIKE '%${params.title}%'
+                </if>
+                <if test="params.auditStatus != null and params.auditStatus != '' ">
+                    AND co.audit_status = #{params.auditStatus}
+                </if>
+                <if test="params.startDate!=null and params.startDate !=''">
+                    AND co.expiration_date >= #{params.startDate}
+                </if>
+                <if test="params.endDate!=null and params.endDate !=''">
+                    AND #{params.endDate}> co.expiration_date
+                </if>
+                GROUP BY cc.id
+                ORDER BY cc.sequence asc,co.effective_date desc
+            ) a
+        <if test="params.labelName != null and params.labelName != '' ">
+            where a.labelName LIKE '%${params.labelName}%'
+        </if>
+    </select>
+
+    <select id="findByPage" parameterType="com.fykj.scaffold.cms.domain.params.ApiCmsContentParams" resultType="com.fykj.scaffold.cms.domain.vo.CmsContentVo">
+        select
+            cc.id,
+            cc.content_id,
+            cc.is_stick as stick,
+            co.title,
+            co.seo_title,
+            co.seo_keyword,
+            co.seo_remark,
+            co.title_alias,
+            co.title_img_url,
+            co.brief_introduction,
+            co.custom_links,
+            co.description,
+            co.effective_date,
+            co.expiration_date,
+            cc.sequence,
+            cc.important_level
+        FROM
+          cms_category_content cc
+        LEFT JOIN  cms_content co ON cc.content_id = co.id
+        WHERE
+            cc.is_deleted = 0 AND cc.is_recycling = 0
+            <if test="params.categoryId != null and params.categoryId != '' ">
+                AND cc.category_id = #{params.categoryId}
+            </if>
+            <if test="params.parentId != null and params.parentId != '' ">
+                AND cc.parent_id = #{params.parentId}
+            </if>
+            <if test="params.orders != null">
+                order by
+                <foreach item="item" collection="params.orders" index="" separator=",">
+                    <if test="item.column == 'create_date' or item.column == ''">
+                        co.effective_date DESC
+                    </if>
+                    <if test="item.column != 'create_date' and item.column != ''">
+                        ${item.column} ${item.sort}
+                    </if>
+                </foreach>
+            </if>
+            <if test="params.orders == null">
+                order by co.effective_date DESC
+            </if>
+    </select>
+
+</mapper>

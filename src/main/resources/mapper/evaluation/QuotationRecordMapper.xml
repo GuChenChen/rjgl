@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fykj.scaffold.evaluation.mapper.QuotationRecordMapper">
+
+
+    <select id="getMapWithQuery" resultType="com.fykj.scaffold.evaluation.domain.vo.QuotationRecordViewVo">
+        select
+            DATE_FORMAT(create_date,"%Y-%m") as viewMonth,
+            sum(qr.type='firstParty') as partyA,
+            sum(qr.type='secondParty') as partyB,
+            sum(qr.subsystem_count) + sum(qr.subsystem_module_count) + sum(qr.module_function_count) as functionalTest,
+            sum(qr.concurrent_count) + sum(qr.performance_count) as performanceTest,
+            sum(qr.code_lines_count) + sum(qr.system_count) as securityTest
+        from quotation_record qr
+        where
+            is_deleted = 0
+        <if test="params.viewTimeStart != null and params.viewTimeStart != '' ">
+            AND create_date &gt;= #{params.viewTimeStart,jdbcType=VARCHAR}
+        </if>
+        <if test="params.viewTimeEnd != null and params.viewTimeEnd != '' ">
+            AND create_date &lt;= #{params.viewTimeEnd,jdbcType=VARCHAR}
+        </if>
+        GROUP BY viewMonth
+    </select>
+
+    <select id="getListWithQuery" resultType="com.fykj.scaffold.evaluation.domain.vo.QuotationRecordVo">
+        SELECT
+        a.creator,
+        a.inputPrise,
+        a.subsystemCount,
+        a.subsystemModuleCount,
+        a.moduleFunctionCount,
+        a.concurrentCount,
+        a.performanceCount,
+        a.codeLinesCount,
+        a.systemCount,
+        concat_ws( '-', a.upWard, a.downWard ) AS ward,
+        a.createDate,
+        a.type
+        FROM
+        (
+        SELECT
+        q.creator,
+        q.input_prise AS inputPrise,
+        q.subsystem_count AS subsystemCount,
+        q.subsystem_module_count AS subsystemModuleCount,
+        q.module_function_count AS moduleFunctionCount,
+        q.concurrent_count AS concurrentCount,
+        q.performance_count AS performanceCount,
+        q.code_lines_count AS codeLinesCount,
+        q.system_count AS systemCount,
+        q.create_date AS createDate,
+        0 + CAST( q.up_ward AS CHAR ) AS upWard,
+        0 + CAST( q.down_ward AS CHAR ) AS downWard,
+        type
+        FROM
+        quotation_record q
+        WHERE
+        q.is_deleted = 0
+        <if test="params.creator != null and params.creator != '' ">
+            AND q.creator LIKE CONCAT(CONCAT('%', #{params.creator,jdbcType=VARCHAR}),'%')
+        </if>
+        <if test="params.viewTimeStart != null">
+            AND q.create_date >= #{params.viewTimeStart}
+        </if>
+        <if test="params.viewTimeEnd != null">
+            AND #{params.viewTimeEnd} >= q.create_date
+        </if>
+        <if test="params.type != null and params.type != '' ">
+            AND q.type = #{params.type,jdbcType=VARCHAR}
+        </if>
+        GROUP BY q.create_date DESC
+        ) a
+    </select>
+</mapper>

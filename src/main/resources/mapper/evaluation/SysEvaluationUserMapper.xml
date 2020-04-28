@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fykj.scaffold.evaluation.mapper.SysEvaluationUserMapper">
+    <select id="getListWithQuery" resultType="com.fykj.scaffold.evaluation.domain.vo.TestAccountListVo">
+        select eu.id,
+               eu.company_name,
+               u.name,
+               u.mobile,
+               u.create_date,
+               eu.last_login_date,
+               u.status
+        from sys_evaluation_user eu
+        inner join sys_user u on u.id = eu.user_id
+        where u.is_deleted = false
+          and eu.is_deleted = false
+          and u.type = 'sut_test_account'
+        <if test="params.keyword != null and params.keyword != '' ">
+            AND (eu.company_name LIKE CONCAT(CONCAT('%', #{params.keyword,jdbcType=VARCHAR}),'%')
+              or u.mobile LIKE CONCAT(CONCAT('%', #{params.keyword,jdbcType=VARCHAR}),'%')
+              or u.email LIKE CONCAT(CONCAT('%', #{params.keyword,jdbcType=VARCHAR}),'%')
+              or u.name LIKE CONCAT(CONCAT('%', #{params.keyword,jdbcType=VARCHAR}),'%'))
+        </if>
+        <if test="params.status != null">
+            AND u.status =#{params.status}
+        </if>
+    </select>
+
+    <select id="getCompanyInfoById" parameterType="java.lang.String" resultType="com.fykj.scaffold.evaluation.domain.vo.TestAccountListVo">
+        select eu.id,
+        u.name,
+        u.username,
+        u.email,
+        u.mobile,
+        u.create_date,
+        eu.company_name,
+        u.status
+        from sys_evaluation_user eu
+        inner join sys_user u on u.id = eu.user_id
+        where eu.id = #{id,jdbcType=VARCHAR}
+    </select>
+
+    <select id="findTestUserList" resultType="com.fykj.scaffold.evaluation.domain.entity.SysEvaluationUser">
+        select eu.*
+        from sys_evaluation_user eu
+        left join sys_user u on u.id = eu.user_id
+        where eu.is_deleted = 0 and u.status = 1
+    </select>
+</mapper>

@@ -1,0 +1,112 @@
+spring:
+  devtools:
+    livereload:
+      enabled: true
+    restart:
+      enabled: true
+    main:
+      allow-bean-definition-overriding: true
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 100MB
+  redis:
+    host: 127.0.0.1
+    password:
+    port: 6379
+    jedis:
+      pool:
+        max-idle: 8
+        min-idle: 0
+        max-maxTotal: 8
+        maxWaitMillis: -1
+  http:
+    encoding:
+      charset: utf-8
+  datasource: #db Configuration
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+#    url: jdbc:mysql://172.16.103.66:3306/evaluation?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
+#    username: root
+#    password: P@ssw0rd
+    url: jdbc:mysql://127.0.0.1:3306/eva?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
+    username: root
+    password: root
+    initialSize: 5 # 初始化大小，最小，
+    minIdle: 5
+    maxActive: 500
+    maxWait: 60000 # 配置获取连接等待超时的时间
+    timeBetweenEvictionRunsMillis: 60000 # 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+    minEvictableIdleTimeMillis: 300000 # 配置一个连接在池中最小生存的时间，单位是毫秒
+    validationQuery: SELECT 1 FROM DUAL
+    testWhileIdle: true
+    testOnBorrow: false
+    testOnReturn: false
+    poolPreparedStatements: true # 打开PSCache，并且指定每个连接上PSCache的大小
+    maxPoolPreparedStatementPerConnectionSize: 20
+    filters: stat;wall # 配置监控统计拦截的filters，去掉后监控界面sql无法统计，'wall'用于防火墙
+    connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000 # ͨ通过connectProperties属性来打开mergeSql功能；慢SQL记录
+#logging:
+#  level:
+#    org.springframework: DEBUG
+
+server:
+  tomcat:
+    uri-encoding: UTF-8
+  port: 9090
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  mapper-locations: classpath*:/mapper/**/*Mapper.xml
+  #  type-aliases-package: com.logs.entity
+  global-config:
+    db-config:
+      logic-delete-value: 1 #配置逻辑删除字段为1是删除
+      logic-not-delete-value: 0 #配置逻辑删除字段为0是未删除
+      db-type: mysql
+      id-type: uuid
+
+#Swagger Configure Properties
+swagger:
+  enable: true
+  packageScanAdmin: com.fykj.scaffold.cms,com.fykj.scaffold.security,com.fykj.scaffold.evaluation
+  packageScanApi: com.fykj.scaffold.api
+  title: fykj
+  description: API Doc
+  version: 2.0
+  contact:
+    name: FengyunXmt Java Group
+    email: fyxmt@fengyuntec.com
+    url:
+
+virtual:
+  path:
+    temp: E:/test/wordToHtml/
+
+#如果不配置，浏览器端将提示跨域错误
+referer:
+   refererList:
+    - http://localhost:9090/
+    - http://localhost:8080/
+
+security:
+  oauth2:
+    client:
+      user-authorization-uri: http://127.0.0.1:9090/oauth/authorize
+      access-token-uri: http://127.0.0.1:9090/oauth/token
+      client-secret: 123456
+      client-id: client_2
+      grant-type: password
+      scope: select
+
+yunpian:
+  configs:
+    - apikey: b1c8b32d41e2599c41db7f12ed1616b2
+      code: yqtjpt
+      template: 【风云疫情统计平台】您的验证码是%s。如非本人操作，请忽略本短信
+
+html:
+  location: E:/test/wordToHtml/
+
+sumByStatus:
+  excel: D:\word\template\sum_by_status.xlsx

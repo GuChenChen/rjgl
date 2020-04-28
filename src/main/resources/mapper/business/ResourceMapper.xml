@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fykj.scaffold.security.business.mapper.ResourceMapper">
+    <select id="findByRoleIdAndTypeAndParent" resultType="com.fykj.scaffold.security.business.domain.entity.Resource">
+        SELECT
+        re.*
+        FROM
+        sys_resource re
+        INNER JOIN sys_role_resource rr ON rr.resource_id = re.id
+        INNER JOIN sys_role ro ON rr.role_id = ro.id
+        WHERE
+        ro.id = #{roleId}
+        AND re.type = #{type}
+        <choose>
+            <when test="parentId == null or parentId == ''">
+                AND re.parent_id is NULL
+            </when>
+            <otherwise>
+                AND re.parent_id = #{parentId}
+            </otherwise>
+        </choose>
+        AND re.is_deleted = 0
+        ORDER BY re.sequence ASC
+    </select>
+    <select id="findByRoleIdAndType" resultType="com.fykj.scaffold.security.business.domain.entity.Resource">
+        SELECT
+        re.*
+        FROM
+        sys_resource re
+        INNER JOIN sys_role_resource rr ON rr.resource_id = re.id
+        INNER JOIN sys_role ro ON rr.role_id = ro.id
+        WHERE
+        ro.id = #{roleId}
+        <if test="type != null">
+            AND re.type = #{type}
+        </if>
+        AND re.is_deleted = 0
+        ORDER BY re.sequence ASC
+    </select>
+    <select id="findPermissionByRole" resultType="java.lang.String">
+        SELECT
+        re.code
+        FROM
+        sys_resource re
+        INNER JOIN sys_role_resource rr ON rr.resource_id = re.id
+        INNER JOIN sys_role ro ON rr.role_id = ro.id
+        WHERE
+        ro.id = #{roleId}
+        AND re.type = 2
+        AND re.is_deleted = 0
+        ORDER BY re.sequence ASC
+    </select>
+
+    <select id="findAllResource" resultType="com.fykj.scaffold.security.business.domain.dto.ResourceOauthDto">
+        SELECT
+            srr.role_id AS roleId,
+            sr.path
+        FROM
+            sys_resource sr
+        LEFT JOIN sys_role_resource srr ON sr.id = srr.resource_id
+        AND srr.is_deleted = 0
+        WHERE
+            sr.is_deleted = 0 AND sr.path !='#';
+    </select>
+</mapper>

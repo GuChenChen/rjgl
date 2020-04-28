@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.fykj.scaffold.evaluation.mapper.CopInfoMapper">
+
+    <select id="findByPage" resultType="com.fykj.scaffold.evaluation.domain.vo.CopInfoVo">
+        select
+        a.id,
+        a.cop_gb_code as copGbCode,
+        a.cop_name as copName,
+        a.cop_addr as copAddr,
+        a.cop_palce as copPalce,
+        a.legal_person as legalPerson,
+        a.legal_person_id as legalPersonId,
+        a.reg_capital as regCapital,
+        a.economy as economy,
+        a.scope as scope,
+        a.industry as industry,
+        a.link_man as linkMan,
+        a.link_phone as linkPhone,
+        a.link_email as linkEmail,
+        a.post_code as postCode,
+        a.cop_state as copState,
+        a.cop_type as copType,
+        a.cop_sort as copSort,
+        DATE_FORMAT(a.reg_date,'%Y-%m-%d %T') as regDate
+        from
+        (
+        select
+        id,
+        cop_gb_code,
+        cop_name,
+        cop_addr,
+        cop_palce,
+        legal_person,
+        legal_person_id,
+        reg_capital,
+        economy,
+        scope,
+        industry,
+        link_man,
+        link_phone,
+        link_email,
+        post_code,
+        cop_state,
+        cop_type,
+        cop_sort,
+        reg_date
+        from cop_info
+        where
+        is_deleted = 0
+        <if test="params.search != null and params.search != '' ">
+            AND (cop_name LIKE CONCAT(CONCAT('%', #{params.search,jdbcType=VARCHAR}),'%')
+            or link_man LIKE CONCAT(CONCAT('%', #{params.search,jdbcType=VARCHAR}),'%')
+            or link_phone LIKE CONCAT(CONCAT('%', #{params.search,jdbcType=VARCHAR}),'%')
+            or link_email LIKE CONCAT(CONCAT('%', #{params.search,jdbcType=VARCHAR}),'%'))
+        </if>
+        <if test="params.viewTimeStart != null ">
+            AND DATE_FORMAT( reg_date, '%Y-%m-%d %T' ) &gt;= #{params.viewTimeStart,jdbcType=VARCHAR}
+        </if>
+        <if test="params.viewTimeEnd != null ">
+            AND DATE_FORMAT( reg_date, '%Y-%m-%d %T' ) &lt;= #{params.viewTimeEnd,jdbcType=VARCHAR}
+        </if>
+        )a
+        order by  a.reg_date
+    </select>
+</mapper>
